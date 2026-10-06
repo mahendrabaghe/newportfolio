@@ -7,7 +7,7 @@
 // 3. Replace the placeholder in RENDER_API_BASE_URL below with your Render URL + '/api'.
 // ==============================================================================
 
-const RENDER_API_BASE_URL = "https://portfolio-3b01.onrender.com/";
+const RENDER_API_BASE_URL = "https://portfolio-3b01.onrender.com/api";
 
 // Automatically detect local development environment
 const isLocal = Boolean(
