@@ -1,11 +1,18 @@
 // ==============================================================================
 // PORTFOLIO CENTRALIZED API CONFIGURATION
 // ==============================================================================
-// Local development setup — backend runs on localhost:5000
-// When you are ready to deploy, update API_BASE_URL to your production URL.
-// ==============================================================================
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const RENDER_API_BASE_URL = "https://mahendra-portfolio-backend.onrender.com/api";
+
+// Auto-detect: use localhost when developing, Render when live
+const isLocal = Boolean(
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1' ||
+  window.location.hostname === '' ||
+  window.location.protocol === 'file:'
+);
+
+const API_BASE_URL = isLocal ? 'http://localhost:5000/api' : RENDER_API_BASE_URL;
 
 // Expose globally for all frontend scripts
 window.API_BASE_URL = API_BASE_URL;
