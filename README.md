@@ -27,10 +27,10 @@ This project converts a static HTML portfolio into a dynamic, full-stack applica
    npm run seed
    ```
    Admin Credentials:
-   - Email: `admin@example.com`
-   - Password: `password123`
-
-4. **Run Server**
+   - Email: `********`
+   - Password:********
+   -
+   - 4. **Run Server**
    Start the backend server:
    ```bash
    npm run dev
