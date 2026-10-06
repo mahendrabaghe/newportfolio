@@ -50,7 +50,7 @@
       btn.disabled = true;
       btn.innerText = 'Logging in...';
 
-      const API_URL = window.API_BASE_URL || window.API_URL || 'https://YOUR-RENDER-SERVICE.onrender.com/api';
+      const API_URL = window.API_BASE_URL || window.API_URL || 'http://localhost:5000/api';
 
       try {
         const res = await fetch(`${API_URL}/auth/login`, {
@@ -69,7 +69,7 @@
         }
       } catch (err) {
         console.error('Login error:', err);
-        errEl.innerText = 'Unable to connect to server. If the backend is waking up, please wait 30 seconds and try again.';
+        errEl.innerText = 'Unable to connect to server. Make sure the backend is running on localhost:5000.';
       } finally {
         btn.disabled = false;
         btn.innerText = 'Login';

@@ -302,7 +302,7 @@ if(themeToggleBtn) {
 }
 
 // ================= DYNAMIC DATA FETCHING =================
-const API_BASE = window.API_BASE_URL || window.API_URL || 'https://YOUR-RENDER-SERVICE.onrender.com/api';
+const API_BASE = window.API_BASE_URL || window.API_URL || 'http://localhost:5000/api';
 
 async function safeFetchJson(url) {
   try {

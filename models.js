@@ -53,8 +53,8 @@ const MessageSchema = new mongoose.Schema({
 
 
 const ProfileSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  title: { type: String, required: true },
+  name: { type: String },
+  title: { type: String },
   description: { type: String },
   profileImage: { type: String },
   resumeFile: { type: String },

@@ -358,7 +358,7 @@
     const token = localStorage.getItem('adminToken');
     if (!token) window.location.href = 'index.html';
 
-    const API_URL = window.API_BASE_URL || window.API_URL || 'https://YOUR-RENDER-SERVICE.onrender.com/api';
+    const API_URL = window.API_BASE_URL || window.API_URL || 'http://localhost:5000/api';
 
     // State for editing items
     let loadedExperiences = [];

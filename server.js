@@ -82,7 +82,20 @@ connectDB();
 
 const app = express();
 
-// Allowed CORS origins (GitHub Pages production + local dev environments)
+// ---------------------------------------------------------------
+// CORS — open for local development
+// When you deploy to GitHub Pages + Render, replace this block with
+// the production allowedOrigins list that is commented below.
+// ---------------------------------------------------------------
+app.use(cors({
+  origin: true,          // allow any origin while working locally
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+/*
+// --- PRODUCTION CORS (uncomment when deploying) ---
 const allowedOrigins = [
   'https://mahendrabaghe.github.io',
   'http://localhost:5500',
@@ -105,20 +118,16 @@ if (process.env.CLIENT_ORIGIN) {
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-
     const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.github.io');
-    if (isAllowed) {
-      return callback(null, true);
-    } else {
-      return callback(new Error(`Origin ${origin} not allowed by CORS policy`));
-    }
+    if (isAllowed) return callback(null, true);
+    return callback(new Error(`Origin ${origin} not allowed by CORS policy`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
-
 app.use(cors(corsOptions));
+*/
 app.use(express.json());
 
 // Cache headers for static files

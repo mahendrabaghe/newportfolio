@@ -19,7 +19,7 @@ router.put('/', protect, async (req, res) => {
     if (!profile) {
       profile = await Profile.create(req.body);
     } else {
-      profile = await Profile.findByIdAndUpdate(profile._id, req.body, { new: true, runValidators: true });
+      profile = await Profile.findByIdAndUpdate(profile._id, req.body, { new: true, runValidators: false });
     }
     res.json(profile);
   } catch (error) {
