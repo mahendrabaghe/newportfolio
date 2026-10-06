@@ -4,44 +4,136 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const dns = require('dns');
 
-// Configure public DNS servers to resolve MongoDB Atlas SRV records reliably on Windows
-dns.setServers(['8.8.8.8', '1.1.1.1']);
+// Configure public DNS servers to resolve MongoDB Atlas SRV records reliably
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {
+  // Ignore in environments where custom DNS servers cannot be set
+}
 
-// Load env vars
+// Load environment variables
 dotenv.config();
 
-// Connect to database
-const { MongoMemoryServer } = require('mongodb-memory-server');
+// Import Models
 const { User } = require('./models');
 
-const connectDB = async () => {
+const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password123';
+
+const ensureDefaultAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
-    console.log('MongoDB Connected to remote cluster');
+    const existingAdmin = await User.findOne({ email: DEFAULT_ADMIN_EMAIL });
+    if (!existingAdmin) {
+      await User.create({
+        email: DEFAULT_ADMIN_EMAIL,
+        password: DEFAULT_ADMIN_PASSWORD
+      });
+      console.log(`Default admin created: ${DEFAULT_ADMIN_EMAIL}`);
+    } else {
+      console.log(`Admin account confirmed: ${existingAdmin.email}`);
+    }
   } catch (err) {
-    console.error('Remote MongoDB connection failed, falling back to in-memory DB...');
-    const mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    await mongoose.connect(uri);
-    console.log('MongoDB Connected to in-memory server');
-    
-    // Seed admin user in memory DB
-    const adminExists = await User.findOne({ email: 'admin@example.com' });
-    if (!adminExists) {
-      await User.create({ email: 'admin@example.com', password: 'password123' });
-      console.log('Default Admin seeded (admin@example.com / password123)');
+    console.error('Error verifying/creating admin account:', err.message);
+  }
+};
+
+// Connect to MongoDB Atlas (with graceful local development fallback)
+const connectDB = async () => {
+  const mongoUri = process.env.MONGODB_URI;
+
+  if (mongoUri) {
+    try {
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+      console.log('MongoDB Connected to remote cluster');
+      await ensureDefaultAdmin();
+      return;
+    } catch (err) {
+      console.error('Remote MongoDB connection failed:', err.message);
+      if (process.env.NODE_ENV === 'production') {
+        console.error('CRITICAL: In production, check MONGODB_URI and MongoDB Atlas Network Access (allow 0.0.0.0/0).');
+      }
+    }
+  } else {
+    console.warn('Warning: MONGODB_URI environment variable is not defined.');
+  }
+
+  // Fallback for development if remote connection failed
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      console.log('Falling back to in-memory DB for local development...');
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongoServer = await MongoMemoryServer.create();
+      const uri = mongoServer.getUri();
+      await mongoose.connect(uri);
+      console.log('MongoDB Connected to in-memory server');
+      await ensureDefaultAdmin();
+    } catch (memErr) {
+      console.error('Failed to start in-memory MongoDB:', memErr.message);
     }
   }
 };
+
 connectDB();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Allowed CORS origins (GitHub Pages production + local dev environments)
+const allowedOrigins = [
+  'https://mahendrabaghe.github.io',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
+if (process.env.CLIENT_ORIGIN) {
+  process.env.CLIENT_ORIGIN.split(',').forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow server-to-server requests, curl, mobile apps, or health checks with no origin header
+    if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.github.io');
+    if (isAllowed) {
+      return callback(null, true);
+    } else {
+      return callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Routes
+// Health Check Endpoint (Required by requirement 7)
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Portfolio API is running'
+  });
+});
+
+// Root API information endpoint
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Portfolio API is running. Health check at /api/health'
+  });
+});
+
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/experiences', require('./routes/experiences'));
@@ -51,5 +143,29 @@ app.use('/api/education', require('./routes/education'));
 app.use('/api/certifications', require('./routes/certifications'));
 app.use('/api/messages', require('./routes/messages'));
 
+// 404 Handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Endpoint not found: ${req.method} ${req.originalUrl}`
+  });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  if (err.message && err.message.includes('CORS policy')) {
+    return res.status(403).json({ success: false, message: err.message });
+  }
+  res.status(err.status || 500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
+});
+
+// Server listener (Required: process.env.PORT || 5000 and 0.0.0.0 host)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});

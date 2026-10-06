@@ -1,8 +1,23 @@
-const fetchNoCache = (url, options = {}) => fetch(url, { ...options, cache: 'no-store' });
+// ================= MOBILE NAVBAR MENU =================
+const menuIcon = document.getElementById('menuIcon');
+const navbar = document.getElementById('navbar');
 
-// ================= SMOOTH SCROLL =================
+if (menuIcon && navbar) {
+  menuIcon.addEventListener('click', () => {
+    navbar.classList.toggle('active');
+    menuIcon.textContent = navbar.classList.contains('active') ? '✕' : '☰';
+  });
+}
+
+// ================= SMOOTH SCROLL & CLOSE MOBILE MENU =================
 document.querySelectorAll('a').forEach(link => {
   link.addEventListener('click', function(e){
+    // Close mobile menu when a link is clicked
+    if (navbar && navbar.classList.contains('active')) {
+      navbar.classList.remove('active');
+      if (menuIcon) menuIcon.textContent = '☰';
+    }
+
     // Check if link has hash (prevents JS from blocking the PDF download link)
     if(this.hash !== ""){
       e.preventDefault();
@@ -13,6 +28,7 @@ document.querySelectorAll('a').forEach(link => {
     }
   });
 });
+
 
 // ================= PROFILE IMAGE POPUP =================
 const profilePic = document.getElementById("profilePic");
@@ -286,12 +302,26 @@ if(themeToggleBtn) {
 }
 
 // ================= DYNAMIC DATA FETCHING =================
-const API_URL = '/api';
+const API_BASE = window.API_BASE_URL || window.API_URL || 'https://YOUR-RENDER-SERVICE.onrender.com/api';
+
+async function safeFetchJson(url) {
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.warn(`[Portfolio] Request to ${url} returned ${res.status}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn(`[Portfolio] Could not connect to ${url}: ${err.message}`);
+    return null;
+  }
+}
 
 async function fetchPortfolioData() {
   try {
     // ---- Profile / About ----
-    const profile = await fetchNoCache(`${API_URL}/profile`).then(r => r.json());
+    const profile = await safeFetchJson(`${API_BASE}/profile`);
     if (profile && profile.name) {
       const nameParts = profile.name.split(' ');
       document.querySelector('.hero h1').innerHTML = `${nameParts[0]} <br><span>${nameParts.slice(1).join(' ')}</span>`;
@@ -331,7 +361,7 @@ async function fetchPortfolioData() {
     }
 
     // ---- Experiences ----
-    const experiences = await fetchNoCache(`${API_URL}/experiences`).then(r => r.json());
+    const experiences = await safeFetchJson(`${API_BASE}/experiences`);
     const expContainer = document.getElementById('experienceContainer');
     if (expContainer) {
       if (experiences && experiences.length > 0) {
@@ -351,7 +381,7 @@ async function fetchPortfolioData() {
     }
 
     // ---- Projects ----
-    const projects = await fetchNoCache(`${API_URL}/projects`).then(r => r.json());
+    const projects = await safeFetchJson(`${API_BASE}/projects`);
     const projectGrid = document.getElementById('projectGrid');
     if (projectGrid && projects && projects.length > 0) {
       projectGrid.innerHTML = projects.map(p => `
@@ -384,7 +414,7 @@ async function fetchPortfolioData() {
     }
 
     // ---- Skills ----
-    const skills = await fetchNoCache(`${API_URL}/skills`).then(r => r.json());
+    const skills = await safeFetchJson(`${API_BASE}/skills`);
     const skillsGrid = document.getElementById('skillsGrid');
     if (skillsGrid) {
       if (skills && skills.length > 0) {
