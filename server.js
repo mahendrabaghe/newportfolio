@@ -4,6 +4,10 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const dns = require('dns');
+
+// Configure public DNS servers to resolve MongoDB Atlas SRV records reliably on Windows
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 // Load environment variables
 dotenv.config();

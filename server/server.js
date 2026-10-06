@@ -2,6 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Configure public DNS servers to resolve MongoDB Atlas SRV records reliably on Windows
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 // Load env vars
 dotenv.config();

@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
+const dns = require('dns');
+
+// Configure public DNS servers to resolve MongoDB Atlas SRV records reliably on Windows
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 dotenv.config();
 
 const { User } = require('./models');
