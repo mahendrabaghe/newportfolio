@@ -189,8 +189,8 @@ Within 1–2 minutes, GitHub Pages will automatically deploy the updated fronten
 ### 2. Test Admin Login
 1. Navigate to: `https://mahendrabaghe.github.io/portfolio/admin/index.html`
 2. Enter your admin credentials:
-   - **Email:** `admin@example.com` (or your custom `ADMIN_EMAIL`)
-   - **Password:** `password123` (or your custom `ADMIN_PASSWORD`)
+   - **Email:** `********` (or your custom `ADMIN_EMAIL`)
+   - **Password:** `********` (or your custom `ADMIN_PASSWORD`)
 3. Click **Login**. You will be smoothly redirected to `dashboard.html`.
 
 ### 3. Test CRUD Operations in Admin Panel
